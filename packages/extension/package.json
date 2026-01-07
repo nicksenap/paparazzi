@@ -1,0 +1,17 @@
+{
+  "name": "@paparazzi/extension",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js --watch"
+  },
+  "dependencies": {
+    "@paparazzi/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.268",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.4.0"
+  }
+}

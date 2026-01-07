@@ -1,0 +1,15 @@
+{
+  "name": "paparazzi",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "build:server": "pnpm --filter @paparazzi/mcp-server build",
+    "build:extension": "pnpm --filter @paparazzi/extension build",
+    "dev:server": "pnpm --filter @paparazzi/mcp-server dev",
+    "dev:extension": "pnpm --filter @paparazzi/extension dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
