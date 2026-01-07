@@ -33,7 +33,7 @@ export { getPerformanceMetrics, getStorageData } from './performance';
 export { attachedTabs, tabStates, clearTabState } from './state';
 
 // Import handlers for event registration
-import { attachedTabs, clearTabState, getOrCreateTabState } from './state';
+import { attachedTabs, clearTabState } from './state';
 import { handleConsoleEvent } from './console';
 import { handleExceptionEvent } from './exceptions';
 import {
@@ -47,29 +47,29 @@ import {
 // CDP Event Handlers
 // ============================================================================
 
-chrome.debugger.onEvent.addListener((source, method, params: any) => {
+chrome.debugger.onEvent.addListener((source, method, params) => {
   if (!source.tabId || !attachedTabs.has(source.tabId)) return;
 
   const tabId = source.tabId;
 
   switch (method) {
     case 'Runtime.consoleAPICalled':
-      handleConsoleEvent(tabId, params);
+      handleConsoleEvent(tabId, params as Parameters<typeof handleConsoleEvent>[1]);
       break;
     case 'Runtime.exceptionThrown':
-      handleExceptionEvent(tabId, params);
+      handleExceptionEvent(tabId, params as Parameters<typeof handleExceptionEvent>[1]);
       break;
     case 'Network.requestWillBeSent':
-      handleRequestStarted(tabId, params);
+      handleRequestStarted(tabId, params as Parameters<typeof handleRequestStarted>[1]);
       break;
     case 'Network.responseReceived':
-      handleResponseReceived(tabId, params);
+      handleResponseReceived(tabId, params as Parameters<typeof handleResponseReceived>[1]);
       break;
     case 'Network.loadingFinished':
-      handleLoadingFinished(tabId, params);
+      handleLoadingFinished(tabId, params as Parameters<typeof handleLoadingFinished>[1]);
       break;
     case 'Network.loadingFailed':
-      handleLoadingFailed(tabId, params);
+      handleLoadingFailed(tabId, params as Parameters<typeof handleLoadingFailed>[1]);
       break;
   }
 });

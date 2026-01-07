@@ -3,7 +3,6 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: {
     'service-worker': 'src/background/service-worker.ts',
-    'console-interceptor': 'src/content/console-interceptor.ts',
   },
   format: ['esm'],
   target: 'chrome120',

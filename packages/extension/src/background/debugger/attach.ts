@@ -2,7 +2,7 @@
  * Debugger attachment management.
  */
 
-import { attachedTabs, tabStates, getOrCreateTabState, clearTabState } from './state';
+import { attachedTabs, getOrCreateTabState, clearTabState } from './state';
 
 /**
  * Attach debugger to a tab and enable all CDP domains.

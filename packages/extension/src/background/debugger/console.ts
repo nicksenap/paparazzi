@@ -2,6 +2,7 @@
  * Console log capture and formatting.
  */
 
+import type { Protocol } from 'devtools-protocol';
 import type { ConsoleLogEntry, ConsoleLogLevel } from '@paparazzi/shared';
 import { tabStates, getOrCreateTabState, MAX_LOGS } from './state';
 
@@ -26,7 +27,7 @@ export function mapLogLevel(type: string): ConsoleLogLevel {
 /**
  * Format a CDP RemoteObject to a string.
  */
-export function formatRemoteObject(obj: any): string {
+export function formatRemoteObject(obj: Protocol.Runtime.RemoteObject): string {
   if (obj.type === 'undefined') return 'undefined';
   if (obj.type === 'string') return obj.value as string;
   if (obj.type === 'number' || obj.type === 'boolean') return String(obj.value);
@@ -43,13 +44,13 @@ export function formatRemoteObject(obj: any): string {
 /**
  * Format a CDP ObjectPreview to a string.
  */
-export function formatObjectPreview(preview: any): string {
+export function formatObjectPreview(preview: Protocol.Runtime.ObjectPreview): string {
   if (preview.type === 'object' && preview.subtype === 'array') {
-    const items = preview.properties?.map((p: any) => p.value).join(', ') || '';
+    const items = preview.properties?.map((p) => p.value).join(', ') || '';
     return `[${items}${preview.overflow ? ', ...' : ''}]`;
   }
   if (preview.type === 'object') {
-    const items = preview.properties?.map((p: any) => `${p.name}: ${p.value}`).join(', ') || '';
+    const items = preview.properties?.map((p) => `${p.name}: ${p.value}`).join(', ') || '';
     return `{${items}${preview.overflow ? ', ...' : ''}}`;
   }
   return preview.description || '[object]';
@@ -81,7 +82,7 @@ export function getConsoleLogs(
 /**
  * Handle Runtime.consoleAPICalled CDP event.
  */
-export function handleConsoleEvent(tabId: number, params: any): void {
+export function handleConsoleEvent(tabId: number, params: Protocol.Runtime.ConsoleAPICalledEvent): void {
   const state = getOrCreateTabState(tabId);
 
   const entry: ConsoleLogEntry = {

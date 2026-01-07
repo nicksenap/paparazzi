@@ -2,9 +2,28 @@
  * Performance metrics and storage access.
  */
 
+import type { Protocol } from 'devtools-protocol';
 import type { PerformanceMetrics, StorageData } from './types';
 import { attachedTabs } from './state';
 import { attachToTab } from './attach';
+
+/**
+ * Web vitals result from page evaluation.
+ */
+interface WebVitalsResult {
+  firstPaint: number | null;
+  firstContentfulPaint: number | null;
+  loadTime: number | null;
+  domContentLoaded: number | null;
+}
+
+/**
+ * Storage evaluation result.
+ */
+interface StorageEvalResult {
+  localStorage: Record<string, string>;
+  sessionStorage: Record<string, string>;
+}
 
 /**
  * Get performance metrics for a tab.
@@ -68,7 +87,7 @@ export async function getPerformanceMetrics(tabId: number): Promise<PerformanceM
         })()
       `,
       returnByValue: true,
-    })) as { result: { value: any } };
+    })) as { result: { value: WebVitalsResult } };
 
     if (vitals.result?.value) {
       const v = vitals.result.value;
@@ -78,7 +97,7 @@ export async function getPerformanceMetrics(tabId: number): Promise<PerformanceM
       if (v.domContentLoaded) metrics.domContentLoaded = Math.round(v.domContentLoaded);
     }
   } catch (err) {
-    console.error('[Paparazzi] Failed to get performance metrics:', err);
+    console.error(`[Paparazzi] Failed to get performance metrics for tab ${tabId}:`, err);
   }
 
   return metrics;
@@ -101,7 +120,7 @@ export async function getStorageData(tabId: number): Promise<StorageData> {
   try {
     // Get cookies
     const cookies = (await chrome.debugger.sendCommand({ tabId }, 'Network.getCookies')) as {
-      cookies: Array<any>;
+      cookies: Protocol.Network.Cookie[];
     };
 
     data.cookies = cookies.cookies.map((c) => ({
@@ -136,14 +155,14 @@ export async function getStorageData(tabId: number): Promise<StorageData> {
         })()
       `,
       returnByValue: true,
-    })) as { result: { value: any } };
+    })) as { result: { value: StorageEvalResult } };
 
     if (storage.result?.value) {
       data.localStorage = storage.result.value.localStorage || {};
       data.sessionStorage = storage.result.value.sessionStorage || {};
     }
   } catch (err) {
-    console.error('[Paparazzi] Failed to get storage data:', err);
+    console.error(`[Paparazzi] Failed to get storage data for tab ${tabId}:`, err);
   }
 
   return data;

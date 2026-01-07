@@ -66,7 +66,7 @@ function readJsonFile(filePath) {
     }
     const content = fs.readFileSync(filePath, 'utf-8');
     return JSON.parse(content);
-  } catch (err) {
+  } catch {
     return null;
   }
 }
