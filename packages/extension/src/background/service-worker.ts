@@ -1,5 +1,5 @@
-import { WebSocketClient } from './websocket-client.js';
-import { takeScreenshot } from './screenshot.js';
+import { WebSocketClient } from './websocket-client';
+import { takeScreenshot } from './screenshot/index';
 import {
   attachToTab,
   isAttached,
@@ -10,7 +10,7 @@ import {
   getDOMSnapshot,
   getPerformanceMetrics,
   getStorageData,
-} from './debugger.js';
+} from './debugger/index';
 import type {
   RequestMessage,
   TakeScreenshotParams,
