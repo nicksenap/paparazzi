@@ -7,9 +7,15 @@
     "build:server": "pnpm --filter @paparazzi/mcp-server build",
     "build:extension": "pnpm --filter @paparazzi/extension build",
     "dev:server": "pnpm --filter @paparazzi/mcp-server dev",
-    "dev:extension": "pnpm --filter @paparazzi/extension dev"
+    "dev:extension": "pnpm --filter @paparazzi/extension dev",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "typescript": "^5.4.0"
+    "@vitest/coverage-v8": "^4.0.16",
+    "tsup": "^8.5.1",
+    "typescript": "^5.4.0",
+    "vitest": "^4.0.16"
   }
 }
