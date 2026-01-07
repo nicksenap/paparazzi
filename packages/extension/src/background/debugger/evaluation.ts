@@ -24,7 +24,7 @@ export async function evaluateJS(
       generatePreview: true,
       userGesture: true,
     })) as {
-      result: { type: string; value?: any; description?: string };
+      result: { type: string; value?: unknown; description?: string };
       exceptionDetails?: { exception: { description: string } };
     };
 

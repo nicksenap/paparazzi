@@ -2,6 +2,7 @@
  * Network request tracking.
  */
 
+import type { Protocol } from 'devtools-protocol';
 import type { NetworkRequest } from './types';
 import { tabStates, getOrCreateTabState, attachedTabs, MAX_REQUESTS } from './state';
 
@@ -50,17 +51,17 @@ export async function getResponseBody(
 /**
  * Handle Network.requestWillBeSent CDP event.
  */
-export function handleRequestStarted(tabId: number, params: any): void {
+export function handleRequestStarted(tabId: number, params: Protocol.Network.RequestWillBeSentEvent): void {
   const state = getOrCreateTabState(tabId);
 
   const request: NetworkRequest = {
     requestId: params.requestId,
     url: params.request.url,
     method: params.request.method,
-    headers: params.request.headers,
+    headers: params.request.headers as Record<string, string>,
     postData: params.request.postData,
     timestamp: new Date(params.timestamp * 1000).toISOString(),
-    type: params.type,
+    type: params.type ?? 'Other',
   };
 
   state.networkRequests.set(params.requestId, request);
@@ -76,7 +77,7 @@ export function handleRequestStarted(tabId: number, params: any): void {
 /**
  * Handle Network.responseReceived CDP event.
  */
-export function handleResponseReceived(tabId: number, params: any): void {
+export function handleResponseReceived(tabId: number, params: Protocol.Network.ResponseReceivedEvent): void {
   const state = tabStates.get(tabId);
   if (!state) return;
 
@@ -91,7 +92,7 @@ export function handleResponseReceived(tabId: number, params: any): void {
 /**
  * Handle Network.loadingFinished CDP event.
  */
-export function handleLoadingFinished(tabId: number, params: any): void {
+export function handleLoadingFinished(tabId: number, params: Protocol.Network.LoadingFinishedEvent): void {
   const state = tabStates.get(tabId);
   if (!state) return;
 
@@ -106,7 +107,7 @@ export function handleLoadingFinished(tabId: number, params: any): void {
 /**
  * Handle Network.loadingFailed CDP event.
  */
-export function handleLoadingFailed(tabId: number, params: any): void {
+export function handleLoadingFailed(tabId: number, params: Protocol.Network.LoadingFailedEvent): void {
   const state = tabStates.get(tabId);
   if (!state) return;
 

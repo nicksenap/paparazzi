@@ -8,14 +8,23 @@
     "build:extension": "pnpm --filter @paparazzi/extension build",
     "dev:server": "pnpm --filter @paparazzi/mcp-server dev",
     "dev:extension": "pnpm --filter @paparazzi/extension dev",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc -b",
+    "knip": "knip",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@eslint/js": "^9.18.0",
     "@vitest/coverage-v8": "^4.0.16",
+    "eslint": "^9.18.0",
+    "globals": "^16.0.0",
+    "knip": "^5.43.0",
     "tsup": "^8.5.1",
     "typescript": "^5.4.0",
+    "typescript-eslint": "^8.21.0",
     "vitest": "^4.0.16"
   }
 }

@@ -2,6 +2,7 @@
  * JavaScript exception handling.
  */
 
+import type { Protocol } from 'devtools-protocol';
 import type { JSException } from './types';
 import { tabStates, getOrCreateTabState, MAX_EXCEPTIONS } from './state';
 
@@ -27,7 +28,7 @@ export function getExceptions(
 /**
  * Handle Runtime.exceptionThrown CDP event.
  */
-export function handleExceptionEvent(tabId: number, params: any): void {
+export function handleExceptionEvent(tabId: number, params: Protocol.Runtime.ExceptionThrownEvent): void {
   const state = getOrCreateTabState(tabId);
 
   const exc = params.exceptionDetails;
@@ -42,7 +43,7 @@ export function handleExceptionEvent(tabId: number, params: any): void {
   if (exc.stackTrace?.callFrames) {
     exception.stackTrace = exc.stackTrace.callFrames
       .map(
-        (f: any) =>
+        (f) =>
           `  at ${f.functionName || '(anonymous)'} (${f.url}:${f.lineNumber}:${f.columnNumber})`
       )
       .join('\n');
