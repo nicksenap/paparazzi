@@ -97,7 +97,7 @@ export async function getPerformanceMetrics(tabId: number): Promise<PerformanceM
       if (v.domContentLoaded) metrics.domContentLoaded = Math.round(v.domContentLoaded);
     }
   } catch (err) {
-    console.error('[Paparazzi] Failed to get performance metrics:', err);
+    console.error(`[Paparazzi] Failed to get performance metrics for tab ${tabId}:`, err);
   }
 
   return metrics;
@@ -162,7 +162,7 @@ export async function getStorageData(tabId: number): Promise<StorageData> {
       data.sessionStorage = storage.result.value.sessionStorage || {};
     }
   } catch (err) {
-    console.error('[Paparazzi] Failed to get storage data:', err);
+    console.error(`[Paparazzi] Failed to get storage data for tab ${tabId}:`, err);
   }
 
   return data;
