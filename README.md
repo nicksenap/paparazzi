@@ -2,6 +2,58 @@
 
 Chrome extension + MCP server that lets Claude see and debug your browser.
 
+## Why?
+
+Playwright and similar tools are great for browser automation, but they're heavyweight for simple debugging tasks. You end up managing headless browsers, writing selectors, and dealing with async waits — just to let an LLM see what's on screen.
+
+Paparazzi takes a simpler approach: it connects to your existing browser session via the Chrome DevTools Protocol. No extra browser instance, no selectors, no waits.
+
+## Tools
+
+| Tool | Description |
+|------|-------------|
+| `take_screenshot` | Capture viewport or full page |
+| `get_console_logs` | Get console output |
+| `get_network_requests` | Inspect XHR/fetch requests |
+| `get_exceptions` | Find uncaught JS errors |
+| `evaluate_js` | Run JavaScript in page context |
+| `get_dom_snapshot` | Get HTML content |
+| `get_performance_metrics` | Web Vitals, memory, DOM stats |
+| `get_storage_data` | Cookies, localStorage, sessionStorage |
+| `get_active_tab` | Current tab URL/title |
+| `refresh_page` | Reload (supports hard refresh) |
+
+## Quick Start
+
+```bash
+make setup  # Install + build + configure Claude
+```
+
+Or step by step:
+
+```bash
+pnpm install && pnpm build
+make configure  # Interactive setup wizard
+```
+
+### Manual Setup
+
+1. Load extension: `chrome://extensions/` → Developer mode → Load unpacked → select `packages/extension`
+2. Add to Claude config (or use `make configure`):
+
+```json
+{
+  "mcpServers": {
+    "paparazzi": {
+      "command": "node",
+      "args": ["/path/to/paparazzi/packages/mcp-server/dist/index.js"]
+    }
+  }
+}
+```
+
+3. Restart Claude Desktop or Claude Code
+
 ## Architecture
 
 ```
@@ -63,53 +115,6 @@ packages/
 │       └── background/         # Service worker + CDP debugger
 └── shared/         # Shared TypeScript types
 ```
-
-## Quick Start
-
-```bash
-# Full setup (install + build + configure Claude)
-make setup
-```
-
-Or step by step:
-
-```bash
-pnpm install && pnpm build
-make configure  # Interactive setup wizard
-```
-
-### Manual Setup
-
-1. Load extension: `chrome://extensions/` → Developer mode → Load unpacked → select `packages/extension`
-2. Add to Claude config (or use `make configure`):
-
-```json
-{
-  "mcpServers": {
-    "paparazzi": {
-      "command": "node",
-      "args": ["/path/to/paparazzi/packages/mcp-server/dist/index.js"]
-    }
-  }
-}
-```
-
-3. Restart Claude
-
-## Tools
-
-| Tool | Description |
-|------|-------------|
-| `take_screenshot` | Capture viewport or full page (auto-chunks pages >7000px) |
-| `get_console_logs` | Get console.log/warn/error entries |
-| `get_network_requests` | Get XHR/fetch requests with timing |
-| `get_exceptions` | Get uncaught JS errors |
-| `evaluate_js` | Run JavaScript in page context |
-| `get_dom_snapshot` | Get HTML content |
-| `get_performance_metrics` | Get Web Vitals, memory, DOM stats |
-| `get_storage_data` | Get cookies, localStorage, sessionStorage |
-| `get_active_tab` | Get current tab URL/title |
-| `refresh_page` | Reload the page (supports hard refresh) |
 
 ## Development
 
