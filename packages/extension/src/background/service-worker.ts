@@ -1,4 +1,4 @@
-import { WebSocketClient } from './websocket-client';
+import { ConnectionManager } from './connection-manager';
 import { takeScreenshot } from './screenshot/index';
 import {
   attachToTab,
@@ -11,18 +11,19 @@ import {
   getPerformanceMetrics,
   getStorageData,
 } from './debugger/index';
-import type {
-  RequestMessage,
-  TakeScreenshotParams,
-  GetConsoleLogsParams,
-  ConsoleLogsResult,
-  ActiveTabResult,
-  RefreshPageParams,
-  RefreshPageResult,
+import {
+  DEFAULT_WS_PORT,
+  WS_PORT_RANGE_SIZE,
+  type RequestMessage,
+  type TakeScreenshotParams,
+  type GetConsoleLogsParams,
+  type ConsoleLogsResult,
+  type ActiveTabResult,
+  type RefreshPageParams,
+  type RefreshPageResult,
 } from '@paparazzi/shared';
 
 // Configuration
-const WS_URL = 'ws://localhost:9222';
 const KEEPALIVE_ALARM = 'paparazzi-keepalive';
 const KEEPALIVE_INTERVAL_MINUTES = 0.5; // 30 seconds
 
@@ -222,15 +223,16 @@ async function handleGetActiveTab(): Promise<ActiveTabResult> {
   };
 }
 
-// Create WebSocket client
-const wsClient = new WebSocketClient({
-  url: WS_URL,
+// Create connection manager for all ports in range
+const manager = new ConnectionManager({
+  basePort: DEFAULT_WS_PORT,
+  portRangeSize: WS_PORT_RANGE_SIZE,
   onRequest: handleRequest,
 });
 
 // Connect on startup
 console.log('[Paparazzi] Service worker starting...');
-wsClient.connect();
+manager.connectAll();
 
 // Set up keepalive alarm to prevent service worker from being killed
 // and to maintain WebSocket connection
@@ -241,31 +243,31 @@ chrome.alarms.create(KEEPALIVE_ALARM, {
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === KEEPALIVE_ALARM) {
     console.log('[Paparazzi] Keepalive ping');
-    wsClient.ping();
+    manager.pingAll();
   }
 });
 
 // Handle extension icon click (optional - could show popup in future)
 chrome.action.onClicked.addListener(() => {
-  const connected = wsClient.isConnected();
+  const connected = manager.isAnyConnected();
   console.log('[Paparazzi] Extension clicked, connected:', connected);
 
   // For now, just try to reconnect if not connected
   if (!connected) {
-    wsClient.connect();
+    manager.connectAll();
   }
 });
 
 // Reconnect when extension is installed or updated
 chrome.runtime.onInstalled.addListener(() => {
   console.log('[Paparazzi] Extension installed/updated');
-  wsClient.connect();
+  manager.connectAll();
 });
 
 // Reconnect when Chrome starts
 chrome.runtime.onStartup.addListener(() => {
   console.log('[Paparazzi] Chrome started');
-  wsClient.connect();
+  manager.connectAll();
 });
 
 // Log when service worker is about to be suspended

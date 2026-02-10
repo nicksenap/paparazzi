@@ -6,6 +6,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { DEFAULT_WS_PORT } from '@paparazzi/shared';
 import { ExtensionBridge } from './extension-bridge/websocket-server';
 import {
   handleTakeScreenshot,
@@ -20,8 +21,6 @@ import {
   handleRefreshPage,
 } from './tools';
 
-const DEFAULT_PORT = 9222;
-
 export interface ServerOptions {
   port?: number;
 }
@@ -33,7 +32,7 @@ export async function createServer(options: ServerOptions = {}): Promise<{
   server: McpServer;
   bridge: ExtensionBridge;
 }> {
-  const port = options.port || Number(process.env.PAPARAZZI_PORT) || DEFAULT_PORT;
+  const port = options.port || Number(process.env.PAPARAZZI_PORT) || DEFAULT_WS_PORT;
 
   const server = new McpServer(
     { name: 'paparazzi', version: '0.1.0' },

@@ -23,6 +23,7 @@ export interface WebSocketClientOptions {
 export class WebSocketClient {
   private ws: WebSocket | null = null;
   private url: string;
+  private logPrefix: string;
   private reconnectInterval: number;
   private onRequest: RequestHandler;
   private reconnectTimeout: number | null = null;
@@ -30,6 +31,9 @@ export class WebSocketClient {
 
   constructor(options: WebSocketClientOptions) {
     this.url = options.url;
+    // Extract port from URL for log messages (e.g. "[Paparazzi:9222]")
+    const port = new URL(options.url).port;
+    this.logPrefix = `[Paparazzi:${port}]`;
     this.reconnectInterval = options.reconnectInterval ?? 3000;
     this.onRequest = options.onRequest;
   }
@@ -48,7 +52,7 @@ export class WebSocketClient {
       this.ws = new WebSocket(this.url);
 
       this.ws.onopen = () => {
-        console.log('[Paparazzi] Connected to MCP server');
+        console.log(`${this.logPrefix} Connected to MCP server`);
         this.sendStatus();
       };
 
@@ -57,21 +61,21 @@ export class WebSocketClient {
           const message = JSON.parse(event.data as string) as WebSocketMessage;
           await this.handleMessage(message);
         } catch (err) {
-          console.error('[Paparazzi] Failed to handle message:', err);
+          console.error(`${this.logPrefix} Failed to handle message:`, err);
         }
       };
 
       this.ws.onclose = () => {
-        console.log('[Paparazzi] Disconnected from MCP server');
+        console.log(`${this.logPrefix} Disconnected from MCP server`);
         this.ws = null;
         this.scheduleReconnect();
       };
 
       this.ws.onerror = (error) => {
-        console.error('[Paparazzi] WebSocket error:', error);
+        console.error(`${this.logPrefix} WebSocket error:`, error);
       };
     } catch (err) {
-      console.error('[Paparazzi] Failed to connect:', err);
+      console.error(`${this.logPrefix} Failed to connect:`, err);
       this.scheduleReconnect();
     }
   }
@@ -119,7 +123,7 @@ export class WebSocketClient {
       return;
     }
 
-    console.log(`[Paparazzi] Reconnecting in ${this.reconnectInterval}ms...`);
+    console.log(`${this.logPrefix} Reconnecting in ${this.reconnectInterval}ms...`);
     this.reconnectTimeout = setTimeout(() => {
       this.reconnectTimeout = null;
       this.connect();
@@ -132,14 +136,14 @@ export class WebSocketClient {
   private async handleMessage(message: WebSocketMessage): Promise<void> {
     if (message.type === 'request') {
       const request = message as RequestMessage;
-      console.log('[Paparazzi] Received request:', request.action);
+      console.log(`${this.logPrefix} Received request:`, request.action);
 
       try {
         const data = await this.onRequest(request);
         this.sendResponse(request.id, true, data);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        console.error('[Paparazzi] Request failed:', errorMessage);
+        console.error(`${this.logPrefix} Request failed:`, errorMessage);
         this.sendResponse(request.id, false, undefined, {
           code: 'REQUEST_FAILED',
           message: errorMessage,
@@ -158,7 +162,7 @@ export class WebSocketClient {
     error?: { code: string; message: string }
   ): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      console.error('[Paparazzi] Cannot send response: not connected');
+      console.error(`${this.logPrefix} Cannot send response: not connected`);
       return;
     }
 
@@ -198,7 +202,7 @@ export class WebSocketClient {
 
       this.ws.send(JSON.stringify(status));
     } catch (err) {
-      console.error('[Paparazzi] Failed to send status:', err);
+      console.error(`${this.logPrefix} Failed to send status:`, err);
     }
   }
 }

@@ -1,10 +1,11 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { randomUUID } from 'crypto';
-import type {
-  RequestMessage,
-  ResponseMessage,
-  StatusMessage,
-  WebSocketMessage,
+import {
+  WS_PORT_RANGE_SIZE,
+  type RequestMessage,
+  type ResponseMessage,
+  type StatusMessage,
+  type WebSocketMessage,
 } from '@paparazzi/shared';
 
 interface PendingRequest {
@@ -15,6 +16,7 @@ interface PendingRequest {
 
 export interface ExtensionBridgeOptions {
   port: number;
+  portRangeSize?: number;
   requestTimeout?: number;
 }
 
@@ -28,54 +30,98 @@ export class ExtensionBridge {
   private wss: WebSocketServer | null = null;
   private connection: WebSocket | null = null;
   private pendingRequests = new Map<string, PendingRequest>();
-  private port: number;
+  private basePort: number;
+  private actualPort: number;
+  private portRangeSize: number;
   private requestTimeout: number;
 
   constructor(options: ExtensionBridgeOptions) {
-    this.port = options.port;
+    this.basePort = options.port;
+    this.actualPort = options.port;
+    this.portRangeSize = options.portRangeSize ?? WS_PORT_RANGE_SIZE;
     this.requestTimeout = options.requestTimeout ?? 30000;
   }
 
   /**
-   * Start the WebSocket server and begin listening for extension connections.
+   * Get the port the server is actually listening on.
    */
-  async start(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.wss = new WebSocketServer({ port: this.port });
+  getPort(): number {
+    return this.actualPort;
+  }
 
-      this.wss.on('listening', () => {
-        console.error(`[Paparazzi] WebSocket server listening on port ${this.port}`);
-        resolve();
+  /**
+   * Try to start a WebSocket server on a single port.
+   * Resolves if successful, rejects with the error otherwise.
+   */
+  private tryPort(port: number): Promise<WebSocketServer> {
+    return new Promise((resolve, reject) => {
+      const wss = new WebSocketServer({ port });
+
+      wss.on('listening', () => {
+        resolve(wss);
       });
 
-      this.wss.on('error', (err) => {
-        if ((err as NodeJS.ErrnoException).code === 'EADDRINUSE') {
-          console.error(`[Paparazzi] Port ${this.port} is already in use`);
-        }
+      wss.on('error', (err) => {
+        wss.close();
         reject(err);
       });
+    });
+  }
 
-      this.wss.on('connection', (ws) => {
-        console.error('[Paparazzi] Chrome extension connected');
-        this.connection = ws;
+  /**
+   * Start the WebSocket server, scanning ports in the configured range.
+   */
+  async start(): Promise<void> {
+    for (let i = 0; i < this.portRangeSize; i++) {
+      const port = this.basePort + i;
+      try {
+        this.wss = await this.tryPort(port);
+        this.actualPort = port;
+        console.error(`[Paparazzi] WebSocket server listening on port ${port}`);
+        this.setupConnectionHandler();
+        return;
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === 'EADDRINUSE') {
+          console.error(`[Paparazzi] Port ${port} is already in use, trying next...`);
+          continue;
+        }
+        throw err;
+      }
+    }
 
-        ws.on('message', (data) => {
-          try {
-            const message = JSON.parse(data.toString()) as WebSocketMessage;
-            this.handleMessage(message);
-          } catch (err) {
-            console.error('[Paparazzi] Failed to parse message:', err);
-          }
-        });
+    const lastPort = this.basePort + this.portRangeSize - 1;
+    throw new Error(
+      `No available port in range ${this.basePort}–${lastPort}. ` +
+        `All ${this.portRangeSize} ports are in use.`
+    );
+  }
 
-        ws.on('close', () => {
-          console.error('[Paparazzi] Chrome extension disconnected');
-          this.connection = null;
-        });
+  /**
+   * Set up the connection handler on the active WebSocket server.
+   */
+  private setupConnectionHandler(): void {
+    if (!this.wss) return;
 
-        ws.on('error', (err) => {
-          console.error('[Paparazzi] WebSocket error:', err);
-        });
+    this.wss.on('connection', (ws) => {
+      console.error('[Paparazzi] Chrome extension connected');
+      this.connection = ws;
+
+      ws.on('message', (data) => {
+        try {
+          const message = JSON.parse(data.toString()) as WebSocketMessage;
+          this.handleMessage(message);
+        } catch (err) {
+          console.error('[Paparazzi] Failed to parse message:', err);
+        }
+      });
+
+      ws.on('close', () => {
+        console.error('[Paparazzi] Chrome extension disconnected');
+        this.connection = null;
+      });
+
+      ws.on('error', (err) => {
+        console.error('[Paparazzi] WebSocket error:', err);
       });
     });
   }
