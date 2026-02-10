@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ExtensionBridge } from './websocket-server';
 import WebSocket, { WebSocketServer } from 'ws';
 
@@ -183,6 +183,31 @@ describe('ExtensionBridge', () => {
       expect(bridge.getPort()).toBe(TEST_PORT);
       expect(extraBridge.getPort()).toBe(TEST_PORT + 1);
       expect(bridge.getPort()).not.toBe(extraBridge.getPort());
+    });
+
+    it('should skip port on non-EADDRINUSE errors and continue scanning', async () => {
+      // Create a bridge on a fresh port range (not overlapping with TEST_PORT)
+      const freshPort = TEST_PORT + 100;
+      extraBridge = new ExtensionBridge({
+        port: freshPort,
+        portRangeSize: 3,
+        requestTimeout: 1000,
+      });
+
+      // Spy on tryPort: first call rejects with EACCES, rest go through normally
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tryPortSpy = vi.spyOn(extraBridge as any, 'tryPort').mockRejectedValueOnce(
+        Object.assign(new Error('listen EACCES'), { code: 'EACCES' })
+      );
+
+      await extraBridge.start();
+
+      // First port was skipped due to EACCES, so it should land on freshPort+1
+      expect(extraBridge.getPort()).toBe(freshPort + 1);
+      // tryPort was called at least twice: once for the failed port, once for the successful one
+      expect(tryPortSpy).toHaveBeenCalledTimes(2);
+
+      tryPortSpy.mockRestore();
     });
 
     it('should throw when all ports in range are exhausted', async () => {
