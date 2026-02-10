@@ -1,4 +1,14 @@
 // ============================================
+// WebSocket Port Configuration
+// ============================================
+
+/** Default WebSocket port for the MCP server ↔ extension bridge */
+export const DEFAULT_WS_PORT = 9222;
+
+/** Number of ports to scan (range: DEFAULT_WS_PORT .. DEFAULT_WS_PORT + size - 1) */
+export const WS_PORT_RANGE_SIZE = 10;
+
+// ============================================
 // WebSocket Message Protocol
 // ============================================
 

@@ -20,7 +20,7 @@ async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error('[Paparazzi] MCP server running on stdio');
+  console.error(`[Paparazzi] MCP server running on stdio (WebSocket port ${bridge.getPort()})`);
   console.error('[Paparazzi] Waiting for Chrome extension connection...');
 }
 
