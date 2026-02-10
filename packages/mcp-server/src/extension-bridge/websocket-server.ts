@@ -62,8 +62,7 @@ export class ExtensionBridge {
       });
 
       wss.on('error', (err) => {
-        wss.close();
-        reject(err);
+        wss.close(() => reject(err));
       });
     });
   }
@@ -81,11 +80,13 @@ export class ExtensionBridge {
         this.setupConnectionHandler();
         return;
       } catch (err) {
-        if ((err as NodeJS.ErrnoException).code === 'EADDRINUSE') {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code === 'EADDRINUSE') {
           console.error(`[Paparazzi] Port ${port} is already in use, trying next...`);
-          continue;
+        } else {
+          console.error(`[Paparazzi] Port ${port} failed (${code}), trying next...`);
         }
-        throw err;
+        continue;
       }
     }
 
