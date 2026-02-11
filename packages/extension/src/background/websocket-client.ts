@@ -28,6 +28,7 @@ export class WebSocketClient {
   private onRequest: RequestHandler;
   private reconnectTimeout: number | null = null;
   private isIntentionallyClosed = false;
+  private hasEverConnected = false;
 
   constructor(options: WebSocketClientOptions) {
     this.url = options.url;
@@ -52,6 +53,7 @@ export class WebSocketClient {
       this.ws = new WebSocket(this.url);
 
       this.ws.onopen = () => {
+        this.hasEverConnected = true;
         console.log(`${this.logPrefix} Connected to MCP server`);
         this.sendStatus();
       };
@@ -66,16 +68,25 @@ export class WebSocketClient {
       };
 
       this.ws.onclose = () => {
-        console.log(`${this.logPrefix} Disconnected from MCP server`);
+        // Only log disconnections for servers we've previously connected to
+        if (this.hasEverConnected) {
+          console.log(`${this.logPrefix} Disconnected from MCP server`);
+        }
         this.ws = null;
         this.scheduleReconnect();
       };
 
-      this.ws.onerror = (error) => {
-        console.error(`${this.logPrefix} WebSocket error:`, error);
+      this.ws.onerror = () => {
+        // Only log errors for servers we've previously connected to.
+        // Connection refused on unoccupied ports is expected and noisy.
+        if (this.hasEverConnected) {
+          console.error(`${this.logPrefix} WebSocket error`);
+        }
       };
     } catch (err) {
-      console.error(`${this.logPrefix} Failed to connect:`, err);
+      if (this.hasEverConnected) {
+        console.error(`${this.logPrefix} Failed to connect:`, err);
+      }
       this.scheduleReconnect();
     }
   }
@@ -123,7 +134,9 @@ export class WebSocketClient {
       return;
     }
 
-    console.log(`${this.logPrefix} Reconnecting in ${this.reconnectInterval}ms...`);
+    if (this.hasEverConnected) {
+      console.log(`${this.logPrefix} Reconnecting in ${this.reconnectInterval}ms...`);
+    }
     this.reconnectTimeout = setTimeout(() => {
       this.reconnectTimeout = null;
       this.connect();
