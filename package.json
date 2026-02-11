@@ -14,7 +14,8 @@
     "knip": "knip",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "refresh": "pnpm build && echo '\n✅ Paparazzi updated!\n\nNext steps:\n  1. Refresh the extension in chrome://extensions (click the reload icon)\n  2. MCP server picks up changes automatically on next Claude Code restart — no reconfiguration needed.\n'"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
